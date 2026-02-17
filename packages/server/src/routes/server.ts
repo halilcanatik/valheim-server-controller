@@ -28,6 +28,11 @@ serverRouter.get(
         running: info.State.Running,
         startedAt: info.State.StartedAt,
         playerCount: status?.player_count ?? 0,
+        players: (status?.players ?? []).map((p) => ({
+          name: p.name || 'Unknown',
+          score: p.score,
+          duration: Math.floor(p.duration)
+        })),
         idleMinutes: idleMinutes > 0 ? parseFloat(idleMinutes.toFixed(1)) : 0,
         shutdownIn:
           idleMinutes > 0
