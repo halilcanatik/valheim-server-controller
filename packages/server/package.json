@@ -1,0 +1,30 @@
+{
+  "name": "server",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Docker-based Valheim server controller with auto-shutdown",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc --noEmit && tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "author": "Frank Ficzak <dev@agonyz.de> (https://www.agonyz.de/)",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dockerode": "^4.0.2",
+    "express": "^4.21.2",
+    "helmet": "^8.0.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/dockerode": "^3.3.31",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.5",
+    "prettier": "^3.8.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,37 @@
+# dependencies
+node_modules/
+
+# build outputs
+dist/
+build/
+
+# environment variables
+.env
+.env.*
+!.env.example
+
+# valheim data
+valheim-config/
+valheim-data/
+
+# logs
+logs/
+*.log
+npm-debug.log*
+
+# runtime
+pids/
+*.pid
+
+# os
+.DS_Store
+Thumbs.db
+
+# ide
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# typescript
+*.tsbuildinfo

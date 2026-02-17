@@ -1,0 +1,27 @@
+interface ApiKeyInputProps {
+  apiKey: string;
+  onChange: (key: string) => void;
+  onSave: () => void;
+}
+
+export const ApiKeyInput = ({ apiKey, onChange, onSave }: ApiKeyInputProps) => (
+  <div className="mb-4">
+    <label htmlFor="apiKey" className="form-label fw-semibold">
+      <i className="bi bi-key-fill me-2"></i>
+      API Key
+    </label>
+    <div className="input-group">
+      <input
+        id="apiKey"
+        type="password"
+        className="form-control"
+        placeholder="Enter your API key"
+        value={apiKey}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <button className="btn btn-primary" onClick={onSave} disabled={!apiKey}>
+        <i className="bi bi-save-fill"></i>
+      </button>
+    </div>
+  </div>
+);

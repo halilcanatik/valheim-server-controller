@@ -1,0 +1,80 @@
+.status-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.status-running {
+    background-color: #00bc8c;
+    animation: pulse 2s infinite;
+}
+
+.status-stopped {
+    background-color: #e74c3c;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 188, 140, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(0, 188, 140, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 188, 140, 0);
+    }
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    background: rgba(48, 52, 63, 0.95);
+    backdrop-filter: blur(10px);
+}
+
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 10px 20px;
+    transition: all 0.2s ease;
+}
+
+.btn:disabled {
+    cursor: not-allowed;
+}
+
+.input-group .btn {
+    padding: 10px 20px;
+}
+
+.form-control {
+    border-radius: 8px;
+    padding: 10px 15px;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(55, 90, 127, 0.25);
+}
+
+h6.text-uppercase {
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+@media (max-width: 576px) {
+    .display-5 {
+        font-size: 2rem;
+    }
+}
+
+body {
+    background: linear-gradient(135deg, #1a1d29 0%, #2c3e50 100%);
+}
