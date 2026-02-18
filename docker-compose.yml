@@ -1,15 +1,17 @@
 services:
   docker-proxy:
-    image: tecnativa/docker-socket-proxy:latest
+    image: tecnativa/docker-socket-proxy:v0.4.2
     container_name: docker-proxy
     environment:
-      - CONTAINERS=1
       - POST=1
+      - ALLOW_START=1
+      - ALLOW_STOP=1
+      - ALLOW_RESTARTS=1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
     networks:
-      - valheim-network
+      - proxy-network
 
   valheim-server:
     image: lloesche/valheim-server:latest
@@ -48,6 +50,7 @@ services:
     restart: unless-stopped
     networks:
       - valheim-network
+      - proxy-network
 
   client:
     image: ghcr.io/agonyz/valheim-server-controller-client:latest
@@ -63,3 +66,5 @@ services:
 networks:
   valheim-network:
     driver: bridge
+  proxy-network:
+    driver: bridge  # separate internal network for proxy communication

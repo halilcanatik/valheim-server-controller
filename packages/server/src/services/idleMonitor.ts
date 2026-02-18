@@ -1,4 +1,5 @@
 import { getContainer, getValheimStatus } from './docker';
+import { isDockerError } from '../types/docker';
 import { config } from '../config/config';
 
 let idleStartTime: Date | null = null;
@@ -7,16 +8,14 @@ export const getIdleStartTime = () => idleStartTime;
 
 const checkIdleAndShutdown = async () => {
   try {
-    const container = getContainer();
-    const info = await container.inspect();
+    const status = await getValheimStatus();
 
-    if (!info.State.Running) {
+    if (status === null) {
       idleStartTime = null;
       return;
     }
 
-    const status = await getValheimStatus();
-    const playerCount = status?.player_count ?? 0;
+    const playerCount = status.player_count ?? 0;
 
     if (playerCount === 0) {
       if (!idleStartTime) {
@@ -31,6 +30,7 @@ const checkIdleAndShutdown = async () => {
 
       if (idleMinutes >= config.idleTimeoutMinutes) {
         console.log('Shutting down due to inactivity...');
+        const container = getContainer();
         await container.stop();
         idleStartTime = null;
       } else {
@@ -45,7 +45,11 @@ const checkIdleAndShutdown = async () => {
       idleStartTime = null;
     }
   } catch (e) {
-    console.error('Idle monitor error:', e);
+    if (isDockerError(e)) {
+      console.error(`Idle monitor Docker error (${e.statusCode}):`, e.message);
+    } else {
+      console.error('Idle monitor error:', e);
+    }
   }
 };
 

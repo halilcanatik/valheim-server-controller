@@ -80,16 +80,18 @@ Create a `docker-compose.yml` with the following contents:
 ```yaml
 services:
   docker-proxy:
-    image: tecnativa/docker-socket-proxy:latest
+    image: tecnativa/docker-socket-proxy:v0.4.2
     container_name: docker-proxy
     environment:
-      - CONTAINERS=1
       - POST=1
+      - ALLOW_START=1
+      - ALLOW_STOP=1
+      - ALLOW_RESTARTS=1
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
     networks:
-      - valheim-network
+      - proxy-network
 
   valheim-server:
     image: lloesche/valheim-server:latest
@@ -114,7 +116,7 @@ services:
       - valheim-network
 
   server:
-    image: ghcr.io/agonyz/valheim-controller-server:latest
+    image: ghcr.io/agonyz/valheim-server-controller-server:latest
     container_name: server
     environment:
       - NODE_ENV=production
@@ -128,9 +130,10 @@ services:
     restart: unless-stopped
     networks:
       - valheim-network
+      - proxy-network
 
   client:
-    image: ghcr.io/agonyz/valheim-controller-client:latest
+    image: ghcr.io/agonyz/valheim-server-controller-client:latest
     container_name: client
     ports:
       - "8080:80"
@@ -143,6 +146,8 @@ services:
 networks:
   valheim-network:
     driver: bridge
+  proxy-network:
+    driver: bridge  # separate internal network for proxy communication
 ```
 
 ### 2. Configure environment variables

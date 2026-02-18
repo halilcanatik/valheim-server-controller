@@ -2,6 +2,7 @@ import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { getContainer, getValheimStatus } from '../services/docker';
 import { getIdleStartTime } from '../services/idleMonitor';
+import { isDockerError } from '../types/docker';
 import { config } from '../config/config';
 
 export const serverRouter = Router();
@@ -10,23 +11,16 @@ serverRouter.get(
   '/status',
   async (_: Request, res: Response, next: NextFunction) => {
     try {
-      const container = getContainer();
-      const [info, status] = await Promise.all([
-        container.inspect(),
-        getValheimStatus()
-      ]);
-
+      const status = await getValheimStatus();
+      const isRunning = status !== null;
       const idleStart = getIdleStartTime();
       const idleMinutes =
-        idleStart && info.State.Running
-          ? (Date.now() - idleStart.getTime()) / 60000
-          : 0;
+        idleStart && isRunning ? (Date.now() - idleStart.getTime()) / 60000 : 0;
 
       res.json({
         containerName: config.containerName,
-        status: info.State.Status,
-        running: info.State.Running,
-        startedAt: info.State.StartedAt,
+        status: isRunning ? 'running' : 'stopped',
+        running: isRunning,
         playerCount: status?.player_count ?? 0,
         players: (status?.players ?? []).map((p) => ({
           name: p.name || 'Unknown',
@@ -50,16 +44,13 @@ serverRouter.post(
   async (_: Request, res: Response, next: NextFunction) => {
     try {
       const container = getContainer();
-      const info = await container.inspect();
-
-      if (info.State.Running) {
-        res.json({ message: 'Server is already running', status: 'running' });
-        return;
-      }
-
       await container.start();
       res.json({ message: 'Server started successfully', status: 'starting' });
     } catch (e) {
+      if (isDockerError(e) && e.statusCode === 304) {
+        res.json({ message: 'Server is already running', status: 'running' });
+        return;
+      }
       next(e);
     }
   }
@@ -70,16 +61,13 @@ serverRouter.post(
   async (_: Request, res: Response, next: NextFunction) => {
     try {
       const container = getContainer();
-      const info = await container.inspect();
-
-      if (!info.State.Running) {
-        res.json({ message: 'Server is already stopped', status: 'stopped' });
-        return;
-      }
-
       await container.stop({ t: 30 });
       res.json({ message: 'Server stopped successfully', status: 'stopped' });
     } catch (e) {
+      if (isDockerError(e) && e.statusCode === 304) {
+        res.json({ message: 'Server is already stopped', status: 'stopped' });
+        return;
+      }
       next(e);
     }
   }
