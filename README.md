@@ -111,6 +111,8 @@ services:
       - STATUS_HTTP=true
       - STATUS_HTTP_PORT=80
       - STATUS_HTTP_CONF=/config/httpd.conf
+      - PUID=${PUID}
+      - PGID=${PGID}
     restart: unless-stopped
     networks:
       - valheim-network
@@ -163,6 +165,8 @@ SERVER_NAME=My Valheim Server
 WORLD_NAME=Dedicated
 SERVER_PASS=your-server-password
 IDLE_TIMEOUT_MINUTES=30
+PUID=1000
+PGID=1000
 ```
 
 Generate a strong API key with:
