@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import archiver from 'archiver';
+import { ZipArchive, type ArchiverError } from 'archiver';
 import { PassThrough } from 'stream';
 import { config } from '../config/config';
 
@@ -36,6 +36,10 @@ export const getWorlds = async (): Promise<WorldInfo[]> => {
         fs.stat(dbPath),
         fs.stat(fwlPath)
       ]);
+
+      if (!dbStats.isFile() || !fwlStats.isFile()) {
+        continue;
+      }
 
       worlds.push({
         name,
@@ -75,13 +79,13 @@ export const createWorldZip = async (worldName: string): Promise<PassThrough> =>
     throw new Error('World files are incomplete');
   }
 
-  const archive = archiver('zip', {
+  const archive = new ZipArchive({
     zlib: { level: 6 }
   });
 
   const output = new PassThrough();
 
-  archive.on('error', (error) => {
+  archive.on('error', (error: ArchiverError) => {
     output.destroy(error);
   });
 

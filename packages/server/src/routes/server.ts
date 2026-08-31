@@ -2,10 +2,27 @@ import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
 import { getContainer, getValheimStatus } from '../services/docker';
 import { getIdleStartTime } from '../services/idleMonitor';
+import { getWorlds } from '../services/worlds';
 import { isDockerError } from '../types/docker';
 import { config } from '../config/config';
 
 export const serverRouter = Router();
+
+serverRouter.get(
+  '/worlds',
+  async (_: Request, res: Response, next: NextFunction) => {
+    try {
+      const worlds = await getWorlds();
+
+      res.json({
+        currentWorld: config.worldName,
+        worlds
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+);
 
 serverRouter.get(
   '/status',
