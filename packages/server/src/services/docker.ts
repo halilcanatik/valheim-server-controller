@@ -7,6 +7,11 @@ const port = parseInt(config.dockerHost.split(':')[2] || '2375');
 export const docker = new Docker({ host, port });
 export const getContainer = () => docker.getContainer(config.containerName);
 
+export const getValheimContainerState = async (): Promise<string> => {
+  const containerInfo = await getContainer().inspect();
+  return containerInfo.State?.Status ?? 'unknown';
+};
+
 export interface ValheimPlayer {
   name: string;
   score: number;
