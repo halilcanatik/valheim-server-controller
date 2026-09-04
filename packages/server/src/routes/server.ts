@@ -87,10 +87,12 @@ serverRouter.get(
       const containerState = await getValheimContainerState();
       const isRunning = containerState === 'running';
       const trackedNames = getTrackedActivePlayerNames();
-      const players = (status?.players ?? []).map((player, index) => ({
-        name: player.name || trackedNames[index] || 'Unknown',
-        score: player.score,
-        duration: Math.floor(player.duration)
+      const playerCount = status?.player_count ?? 0;
+      const players = Array.from({ length: playerCount }, (_, index) => ({
+        name:
+          trackedNames[index] || status?.players[index]?.name || 'Unknown',
+        score: status?.players[index]?.score ?? 0,
+        duration: Math.floor(status?.players[index]?.duration ?? 0)
       }));
       const idleStart = getIdleStartTime();
       const idleMinutes =
@@ -100,7 +102,7 @@ serverRouter.get(
         containerName: config.containerName,
         status: containerState,
         running: isRunning,
-        playerCount: status?.player_count ?? 0,
+        playerCount,
         players,
         playerHistory: await getPlayerHistory(),
         idleMinutes: idleMinutes > 0 ? parseFloat(idleMinutes.toFixed(1)) : 0,
