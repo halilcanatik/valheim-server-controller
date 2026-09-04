@@ -79,12 +79,20 @@ const followLogs = async () => {
       tail: 0
     })) as Readable;
     let buffer = '';
+    let flushTimer: NodeJS.Timeout | null = null;
 
     stream.on('data', (chunk: Buffer | string) => {
       buffer += chunk.toString();
       const lines = splitLogEntries(buffer);
       buffer = lines.pop() ?? '';
       lines.forEach(processLogLine);
+
+      if (flushTimer) clearTimeout(flushTimer);
+      flushTimer = setTimeout(() => {
+        if (!buffer) return;
+        processLogLine(buffer);
+        buffer = '';
+      }, 1000);
     });
 
     stream.on('error', (error) => {
