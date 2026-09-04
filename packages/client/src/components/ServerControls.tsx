@@ -1,9 +1,11 @@
+import { useState } from 'react';
+
 interface ServerControlsProps {
   running: boolean;
   stopping: boolean;
   playerCount: number;
   onStart: () => void;
-  onStop: () => void;
+  onStop: () => Promise<boolean>;
   onRefresh: () => void;
 }
 
@@ -14,13 +16,29 @@ export const ServerControls = ({
   onStart,
   onStop,
   onRefresh
-}: ServerControlsProps) => (
+}: ServerControlsProps) => {
+  const [stopRequested, setStopRequested] = useState(false);
+
+  const handleStop = async () => {
+    setStopRequested(true);
+    const stoppedRequestAccepted = await onStop();
+    if (!stoppedRequestAccepted) setStopRequested(false);
+  };
+
+  const handleStart = () => {
+    setStopRequested(false);
+    onStart();
+  };
+
+  const isStopping = stopping || (stopRequested && running);
+
+  return (
   <div>
     <h6 className="text-uppercase text-muted mb-3">Controls</h6>
     <div className="d-grid gap-2">
       <button
         className="btn btn-success d-flex align-items-center justify-content-center"
-        onClick={onStart}
+        onClick={handleStart}
         disabled={running}
       >
         <i className="bi bi-play-fill me-2"></i>
@@ -35,14 +53,14 @@ export const ServerControls = ({
       >
         <button
           className="btn btn-danger d-flex align-items-center justify-content-center w-100"
-          onClick={onStop}
-          disabled={!running || stopping || playerCount > 0}
+          onClick={() => void handleStop()}
+          disabled={!running || isStopping || playerCount > 0}
         >
           <i className="bi bi-stop-fill me-2"></i>
-          {stopping ? 'Stopping Server, Please Wait' : 'Stop Server'}
+          {isStopping ? 'Stopping Server, Please Wait' : 'Stop Server'}
         </button>
       </span>
-      {playerCount > 0 && running && !stopping && (
+      {playerCount > 0 && running && !isStopping && (
         <div className="text-warning small mt-2 text-center">
           Stop Server is unavailable while players are in the game.
         </div>
@@ -56,4 +74,5 @@ export const ServerControls = ({
       </button>
     </div>
   </div>
-);
+  );
+};

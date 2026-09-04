@@ -95,7 +95,12 @@ export const App = () => {
                       onRefresh={fetchStatus}
                     />
                     <hr />
-                    <Statistics players={status.playerHistory} />
+                    <Statistics
+                      key={status.currentWorld}
+                      currentWorld={status.currentWorld}
+                      recordedWorlds={status.recordedWorlds}
+                      playerHistoryByWorld={status.playerHistoryByWorld}
+                    />
                     <hr />
                     <WorldFiles
                       status={status}

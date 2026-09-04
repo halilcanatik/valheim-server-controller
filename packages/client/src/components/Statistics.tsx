@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import type { PlayerHistoryInfo } from '../types';
 
 interface StatisticsProps {
-  players: PlayerHistoryInfo[];
+  currentWorld: string;
+  recordedWorlds: string[];
+  playerHistoryByWorld: Record<string, PlayerHistoryInfo[]>;
 }
 
 const formatDuration = (seconds: number) => {
@@ -14,7 +17,13 @@ const formatDuration = (seconds: number) => {
   return `${minutes}m`;
 };
 
-export const Statistics = ({ players }: StatisticsProps) => {
+export const Statistics = ({
+  currentWorld,
+  recordedWorlds,
+  playerHistoryByWorld
+}: StatisticsProps) => {
+  const [selectedWorld, setSelectedWorld] = useState(currentWorld);
+  const players = playerHistoryByWorld[selectedWorld] ?? [];
   const onlinePlayers = players
     .filter((player) => player.active)
     .sort((a, b) => b.currentPlaytimeSeconds - a.currentPlaytimeSeconds);
@@ -24,7 +33,25 @@ export const Statistics = ({ players }: StatisticsProps) => {
 
   return (
     <section>
-      <h6 className="text-uppercase text-muted mb-3">Statistics</h6>
+      <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
+        <h6 className="text-uppercase text-muted mb-0">
+          Statistics - Current World: {currentWorld}
+        </h6>
+        {recordedWorlds.length > 1 && (
+          <select
+            className="form-select form-select-sm w-auto"
+            value={selectedWorld}
+            onChange={(event) => setSelectedWorld(event.target.value)}
+            aria-label="Statistics world"
+          >
+            {recordedWorlds.map((world) => (
+              <option key={world} value={world}>
+                {world}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
       <div className="row g-3">
         <div className="col-6">
           <small className="text-muted d-block mb-2">Players Online</small>
