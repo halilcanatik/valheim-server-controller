@@ -47,6 +47,7 @@ services:
       - DOCKER_HOST=tcp://docker-proxy:2375
       - VALHEIM_CONTAINER_NAME=valheim-server
       - VALHEIM_CONFIG_PATH=/valheim-config
+      - PLAYER_HISTORY_PATH=/player-history/player-history.json
       - WORLD_NAME=${WORLD_NAME:-Dedicated}
       - API_KEY=${API_KEY}
       - IDLE_TIMEOUT_MINUTES=${IDLE_TIMEOUT_MINUTES:-30}
