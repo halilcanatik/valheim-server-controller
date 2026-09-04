@@ -7,7 +7,11 @@ import {
 } from '../services/docker';
 import { getIdleStartTime } from '../services/idleMonitor';
 import { createWorldZip, getWorlds } from '../services/worlds';
-import { getPlayerHistory } from '../services/playerHistory';
+import {
+  getPlayerHistory,
+  getPlayerHistoryByWorld,
+  getRecordedWorlds
+} from '../services/playerHistory';
 import { getTrackedActivePlayerNames } from '../services/playerLogTracker';
 import { isDockerError } from '../types/docker';
 import { config } from '../config/config';
@@ -108,7 +112,10 @@ serverRouter.get(
         running: isRunning,
         playerCount: Math.max(playerCount, players.length),
         players,
+        currentWorld: config.worldName || 'Unknown World',
+        recordedWorlds: await getRecordedWorlds(),
         playerHistory: await getPlayerHistory(),
+        playerHistoryByWorld: await getPlayerHistoryByWorld(),
         idleMinutes: idleMinutes > 0 ? parseFloat(idleMinutes.toFixed(1)) : 0,
         shutdownIn:
           idleMinutes > 0

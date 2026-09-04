@@ -63,8 +63,16 @@ export const useServerApi = (
     }
   }, [api, handleError, setMessage, fetchStatus]);
 
-  const stopServer = useCallback(async () => {
-    if (!window.confirm('Are you sure you want to stop the server?')) return;
+  const stopServer = useCallback(async (): Promise<boolean> => {
+    if (
+      !window.confirm(
+        'Are you sure you want to stop the server?\n\n' +
+          'After you click OK, it can take up to 2 minutes for the server to close. ' +
+          'You do not need to click Stop Server again.'
+      )
+    ) {
+      return false;
+    }
     try {
       const data = await api
         .post('stop', { timeout: false })
@@ -73,8 +81,10 @@ export const useServerApi = (
       setTimeout(() => {
         void fetchStatus();
       }, 2000);
+      return true;
     } catch (e) {
       await handleError(e);
+      return false;
     }
   }, [api, handleError, setMessage, fetchStatus]);
 

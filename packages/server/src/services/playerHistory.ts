@@ -3,6 +3,7 @@ import path from 'path';
 import { config } from '../config/config';
 
 interface StoredPlayer {
+  worldName: string;
   name: string;
   totalPlaytimeSeconds: number;
   currentSessionStartedAt: string | null;
@@ -11,6 +12,7 @@ interface StoredPlayer {
 }
 
 export interface PlayerHistoryInfo {
+  worldName: string;
   name: string;
   active: boolean;
   currentPlaytimeSeconds: number;
@@ -19,6 +21,7 @@ export interface PlayerHistoryInfo {
 }
 
 const EMPTY_HISTORY: StoredPlayer[] = [];
+const currentWorldName = () => config.worldName || 'Unknown World';
 let players: StoredPlayer[] | null = null;
 let writeQueue = Promise.resolve();
 
@@ -32,7 +35,16 @@ const loadPlayers = async (): Promise<StoredPlayer[]> => {
   try {
     const file = await fs.readFile(config.playerHistoryPath, 'utf8');
     const saved = JSON.parse(file) as unknown;
-    players = Array.isArray(saved) ? (saved as StoredPlayer[]) : EMPTY_HISTORY;
+    players = Array.isArray(saved)
+      ? (saved as Partial<StoredPlayer>[]).map((player) => ({
+          worldName: player.worldName || currentWorldName(),
+          name: player.name || 'Unknown',
+          totalPlaytimeSeconds: player.totalPlaytimeSeconds ?? 0,
+          currentSessionStartedAt: player.currentSessionStartedAt ?? null,
+          lastSeenAt: player.lastSeenAt ?? null,
+          lastObservedAt: player.lastObservedAt ?? null
+        }))
+      : EMPTY_HISTORY;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
       console.error('Unable to read player history:', error);
@@ -66,6 +78,7 @@ export const recordActivePlayers = async (
   let changed = false;
 
   for (const player of storedPlayers) {
+    if (player.worldName !== currentWorldName()) continue;
     if (player.lastObservedAt === null) continue;
 
     const elapsedSeconds = Math.max(
@@ -83,10 +96,13 @@ export const recordActivePlayers = async (
   }
 
   for (const name of activeSet) {
-    let player = storedPlayers.find((item) => item.name === name);
+    let player = storedPlayers.find(
+      (item) => item.worldName === currentWorldName() && item.name === name
+    );
 
     if (!player) {
       player = {
+        worldName: currentWorldName(),
         name,
         totalPlaytimeSeconds: 0,
         currentSessionStartedAt: observedAt.toISOString(),
@@ -119,12 +135,14 @@ export const recordActivePlayers = async (
 };
 
 export const getPlayerHistory = async (
+  worldName = currentWorldName(),
   observedAt = new Date()
 ): Promise<PlayerHistoryInfo[]> => {
   const storedPlayers = await loadPlayers();
   const observedTime = observedAt.getTime();
 
   return storedPlayers
+    .filter((player) => player.worldName === worldName)
     .map((player) => {
       const active = player.currentSessionStartedAt !== null;
       const currentPlaytimeSeconds = active && player.lastObservedAt
@@ -135,6 +153,7 @@ export const getPlayerHistory = async (
         : 0;
 
       return {
+        worldName: player.worldName,
         name: player.name,
         active,
         currentPlaytimeSeconds,
@@ -152,15 +171,19 @@ export const getPlayerHistory = async (
 
 export const recordPlayerJoined = async (
   name: string,
+  worldName = currentWorldName(),
   observedAt = new Date()
 ) => {
   if (!name || name === 'Unknown') return;
 
   const storedPlayers = await loadPlayers();
-  let player = storedPlayers.find((item) => item.name === name);
+  let player = storedPlayers.find(
+    (item) => item.worldName === worldName && item.name === name
+  );
 
   if (!player) {
     player = {
+      worldName,
       name,
       totalPlaytimeSeconds: 0,
       currentSessionStartedAt: observedAt.toISOString(),
@@ -179,10 +202,13 @@ export const recordPlayerJoined = async (
 
 export const recordPlayerLeft = async (
   name: string,
+  worldName = currentWorldName(),
   observedAt = new Date()
 ) => {
   const storedPlayers = await loadPlayers();
-  const player = storedPlayers.find((item) => item.name === name);
+  const player = storedPlayers.find(
+    (item) => item.worldName === worldName && item.name === name
+  );
 
   if (!player || !player.currentSessionStartedAt) return;
 
@@ -197,4 +223,19 @@ export const recordPlayerLeft = async (
   player.lastObservedAt = null;
   player.lastSeenAt = observedAt.toISOString();
   savePlayers();
+};
+
+export const getRecordedWorlds = async (): Promise<string[]> => {
+  const storedPlayers = await loadPlayers();
+  return [...new Set(storedPlayers.map((player) => player.worldName))].sort();
+};
+
+export const getPlayerHistoryByWorld = async (
+  observedAt = new Date()
+): Promise<Record<string, PlayerHistoryInfo[]>> => {
+  const worlds = await getRecordedWorlds();
+  const entries = await Promise.all(
+    worlds.map(async (world) => [world, await getPlayerHistory(world, observedAt)] as const)
+  );
+  return Object.fromEntries(entries);
 };

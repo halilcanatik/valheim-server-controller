@@ -9,7 +9,10 @@ export type ServerStatus = {
   running: boolean;
   playerCount: number;
   players: ValheimPlayer[];
+  currentWorld: string;
+  recordedWorlds: string[];
   playerHistory: PlayerHistoryInfo[];
+  playerHistoryByWorld: Record<string, PlayerHistoryInfo[]>;
   idleMinutes: number;
   shutdownIn: number | null;
 };
