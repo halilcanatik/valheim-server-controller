@@ -12,6 +12,27 @@ export const getValheimContainerState = async (): Promise<string> => {
   return containerInfo.State?.Status ?? 'unknown';
 };
 
+export const getValheimPlayerNamesFromLogs = async (): Promise<string[]> => {
+  const logs = await getContainer().logs({
+    stdout: true,
+    stderr: true,
+    tail: 200
+  });
+  const text = logs.toString('utf8');
+  const names: string[] = [];
+
+  for (const line of text.split(/\r?\n/)) {
+    const match = line.match(/Got character ZDOID from (.+?)\s*:/);
+    const name = match?.[1]?.trim();
+
+    if (name && !names.includes(name)) {
+      names.push(name);
+    }
+  }
+
+  return names;
+};
+
 export interface ValheimPlayer {
   name: string;
   score: number;
