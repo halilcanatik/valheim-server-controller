@@ -6,6 +6,7 @@ on:
     branches:
       - master
       - worlds-download-edit
+      - players
 
 jobs:
   build-and-push:
