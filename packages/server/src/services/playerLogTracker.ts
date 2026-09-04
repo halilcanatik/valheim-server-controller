@@ -1,6 +1,7 @@
 import type { Readable } from 'stream';
 import { getContainer } from './docker';
 import {
+  closeActiveSessionsForOtherWorlds,
   recordPlayerJoined,
   recordPlayerLeft
 } from './playerHistory';
@@ -111,5 +112,6 @@ const followLogs = async () => {
 };
 
 export const startPlayerLogTracker = () => {
+  void closeActiveSessionsForOtherWorlds();
   void followLogs();
 };
