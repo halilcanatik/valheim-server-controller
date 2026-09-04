@@ -6,6 +6,7 @@ import { AlertMessage } from './components/AlertMessage';
 import { ApiKeyInput } from './components/ApiKeyInput';
 import { ServerStatus as ServerStatusDisplay } from './components/ServerStatus';
 import { ServerControls } from './components/ServerControls';
+import { WorldFiles } from './components/WorldFiles';
 import { PageHeader } from './components/PageHeader';
 import 'bootswatch/dist/darkly/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -17,7 +18,13 @@ export const App = () => {
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [savedApiKey, setSavedApiKey] = useState('');
 
-  const { fetchStatus, startServer, stopServer } = useServerApi(
+  const {
+    fetchStatus,
+    startServer,
+    stopServer,
+    fetchWorlds,
+    downloadWorld
+  } = useServerApi(
     savedApiKey || apiKeyInput,
     setStatus,
     setMessage,
@@ -30,7 +37,7 @@ export const App = () => {
       void fetchStatus();
     }, 30000);
     return () => clearInterval(interval);
-  }, [savedApiKey]);
+  }, [savedApiKey, fetchStatus]);
 
   useEffect(() => {
     if (!message) return;
@@ -79,10 +86,16 @@ export const App = () => {
                     <ServerStatusDisplay status={status} />
                     <hr />
                     <ServerControls
-                      running={status.running}
+                      running={status.running || status.status !== 'exited'}
                       onStart={startServer}
                       onStop={stopServer}
                       onRefresh={fetchStatus}
+                    />
+                    <hr />
+                    <WorldFiles
+                      status={status}
+                      fetchWorlds={fetchWorlds}
+                      downloadWorld={downloadWorld}
                     />
                   </>
                 ) : (

@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import ky, { HTTPError } from 'ky';
-import type { ServerStatus, Message } from '../types';
+import type { ServerStatus, Message, WorldsResponse } from '../types';
 
 interface ApiResponse {
   message: string;
@@ -12,12 +12,16 @@ export const useServerApi = (
   setMessage: (message: Message | null) => void,
   setLoading: (loading: boolean) => void
 ) => {
-  const api = ky.create({
-    prefixUrl: '/api',
-    headers: { 'X-API-Key': apiKey }
-  });
+  const api = useMemo(
+    () =>
+      ky.create({
+        prefixUrl: '/api',
+        headers: { 'X-API-Key': apiKey }
+      }),
+    [apiKey]
+  );
 
-  const handleError = async (e: unknown) => {
+  const handleError = useCallback(async (e: unknown) => {
     if (e instanceof HTTPError) {
       const text =
         e.response.status === 401
@@ -27,7 +31,7 @@ export const useServerApi = (
     } else if (e instanceof Error) {
       setMessage({ text: e.message, type: 'error' });
     }
-  };
+  }, [setMessage]);
 
   const fetchStatus = useCallback(async (): Promise<boolean> => {
     try {
@@ -40,7 +44,7 @@ export const useServerApi = (
     } finally {
       setLoading(false);
     }
-  }, [apiKey, setStatus, setMessage, setLoading]);
+  }, [api, handleError, setStatus, setLoading]);
 
   const startServer = useCallback(async () => {
     try {
@@ -55,7 +59,7 @@ export const useServerApi = (
     } catch (e) {
       await handleError(e);
     }
-  }, [apiKey, setMessage, fetchStatus]);
+  }, [api, handleError, setMessage, fetchStatus]);
 
   const stopServer = useCallback(async () => {
     if (!window.confirm('Are you sure you want to stop the server?')) return;
@@ -70,7 +74,41 @@ export const useServerApi = (
     } catch (e) {
       await handleError(e);
     }
-  }, [apiKey, setMessage, fetchStatus]);
+  }, [api, handleError, setMessage, fetchStatus]);
 
-  return { fetchStatus, startServer, stopServer };
+  const fetchWorlds = useCallback(async (): Promise<WorldsResponse | null> => {
+    try {
+      return await api.get('worlds').json<WorldsResponse>();
+    } catch (e) {
+      await handleError(e);
+      return null;
+    }
+  }, [api, handleError]);
+
+  const downloadWorld = useCallback(
+    async (worldName: string): Promise<Blob | null> => {
+      try {
+        return await api.get(`worlds/${encodeURIComponent(worldName)}/download`).blob();
+      } catch (e) {
+        if (e instanceof HTTPError && e.response.status === 403) {
+          setMessage({
+            text: 'Stop the server completely before downloading a world.',
+            type: 'error'
+          });
+        } else {
+          await handleError(e);
+        }
+        return null;
+      }
+    },
+    [api, handleError, setMessage]
+  );
+
+  return {
+    fetchStatus,
+    startServer,
+    stopServer,
+    fetchWorlds,
+    downloadWorld
+  };
 };

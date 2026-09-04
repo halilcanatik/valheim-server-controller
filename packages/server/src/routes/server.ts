@@ -82,14 +82,15 @@ serverRouter.get(
   async (_: Request, res: Response, next: NextFunction) => {
     try {
       const status = await getValheimStatus();
-      const isRunning = status !== null;
+      const containerState = await getValheimContainerState();
+      const isRunning = containerState === 'running';
       const idleStart = getIdleStartTime();
       const idleMinutes =
         idleStart && isRunning ? (Date.now() - idleStart.getTime()) / 60000 : 0;
 
       res.json({
         containerName: config.containerName,
-        status: isRunning ? 'running' : 'stopped',
+        status: containerState,
         running: isRunning,
         playerCount: status?.player_count ?? 0,
         players: (status?.players ?? []).map((p) => ({
