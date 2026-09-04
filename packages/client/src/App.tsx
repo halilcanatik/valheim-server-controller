@@ -87,6 +87,8 @@ export const App = () => {
                     <hr />
                     <ServerControls
                       running={status.running || status.status !== 'exited'}
+                      stopping={status.status === 'stopping'}
+                      playerCount={status.playerCount}
                       onStart={startServer}
                       onStop={stopServer}
                       onRefresh={fetchStatus}

@@ -26,7 +26,9 @@ export const useServerApi = (
       const text =
         e.response.status === 401
           ? 'Invalid API key'
-          : `HTTP ${e.response.status}`;
+          : e.response.status === 409
+            ? 'Cannot stop the server while players are online.'
+            : `HTTP ${e.response.status}`;
       setMessage({ text, type: 'error' });
     } else if (e instanceof Error) {
       setMessage({ text: e.message, type: 'error' });

@@ -16,9 +16,27 @@ export const ServerStatus = ({ status }: ServerStatusProps) => (
               status.running ? 'status-running' : 'status-stopped'
             }`}
           />
-          {status.running ? 'Running' : 'Stopped'}
+          {status.status === 'running'
+            ? 'Running'
+            : status.status === 'exited'
+              ? 'Stopped'
+              : status.status}
         </strong>
       </div>
+
+      {status.players.length > 0 && (
+        <div className="col-12">
+          <small className="text-muted d-block">Players online</small>
+          <strong className="d-flex align-items-center flex-wrap gap-2">
+            {status.players.map((player) => (
+              <span className="badge bg-info" key={player.name}>
+                <i className="bi bi-person-fill me-1"></i>
+                {player.name}
+              </span>
+            ))}
+          </strong>
+        </div>
+      )}
 
       <div className="col-6">
         <small className="text-muted d-block">Players</small>
