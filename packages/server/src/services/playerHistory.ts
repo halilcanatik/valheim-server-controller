@@ -239,3 +239,31 @@ export const getPlayerHistoryByWorld = async (
   );
   return Object.fromEntries(entries);
 };
+
+export const closeActiveSessionsForOtherWorlds = async (
+  worldName = currentWorldName(),
+  observedAt = new Date()
+) => {
+  const storedPlayers = await loadPlayers();
+  let changed = false;
+
+  for (const player of storedPlayers) {
+    if (player.worldName === worldName || !player.currentSessionStartedAt) {
+      continue;
+    }
+
+    if (player.lastObservedAt) {
+      player.totalPlaytimeSeconds += Math.max(
+        0,
+        (observedAt.getTime() - new Date(player.lastObservedAt).getTime()) / 1000
+      );
+    }
+
+    player.currentSessionStartedAt = null;
+    player.lastObservedAt = null;
+    player.lastSeenAt = observedAt.toISOString();
+    changed = true;
+  }
+
+  if (changed) savePlayers();
+};

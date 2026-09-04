@@ -35,7 +35,7 @@ export const Statistics = ({
     <section>
       <div className="d-flex justify-content-between align-items-center gap-2 mb-3">
         <h6 className="text-uppercase text-muted mb-0">
-          Statistics - Current World: {currentWorld}
+          Statistics - World: {selectedWorld}
         </h6>
         {recordedWorlds.length > 1 && (
           <select
@@ -46,7 +46,7 @@ export const Statistics = ({
           >
             {recordedWorlds.map((world) => (
               <option key={world} value={world}>
-                {world}
+                {world === currentWorld ? `${world} (Current)` : world}
               </option>
             ))}
           </select>
