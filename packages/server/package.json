@@ -13,12 +13,14 @@
   "author": "Frank Ficzak <dev@agonyz.de> (https://www.agonyz.de/)",
   "license": "MIT",
   "dependencies": {
+    "archiver": "^8.0.0",
     "cors": "^2.8.5",
     "dockerode": "^4.0.2",
     "express": "^4.21.2",
     "helmet": "^8.0.0"
   },
   "devDependencies": {
+    "@types/archiver": "^8.0.0",
     "@types/cors": "^2.8.17",
     "@types/dockerode": "^3.3.31",
     "@types/express": "^5.0.0",

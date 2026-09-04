@@ -48,8 +48,12 @@ services:
       - NODE_ENV=production
       - DOCKER_HOST=tcp://docker-proxy:2375
       - VALHEIM_CONTAINER_NAME=valheim-server
+      - VALHEIM_CONFIG_PATH=/valheim-config
+      - WORLD_NAME=${WORLD_NAME:-Dedicated}
       - API_KEY=${API_KEY}
       - IDLE_TIMEOUT_MINUTES=${IDLE_TIMEOUT_MINUTES:-30}
+    volumes:
+      - ${VALHEIM_CONFIG_HOST_PATH:-./valheim-config}:/valheim-config:ro
     depends_on:
       - docker-proxy
       - valheim-server
