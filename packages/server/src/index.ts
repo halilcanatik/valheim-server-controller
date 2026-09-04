@@ -6,6 +6,7 @@ import { authenticate } from './middleware/authenticate';
 import { errorHandler } from './middleware/errorHandler';
 import { serverRouter } from './routes/server';
 import { startIdleMonitor } from './services/idleMonitor';
+import { startPlayerLogTracker } from './services/playerLogTracker';
 
 const app = express();
 
@@ -24,4 +25,5 @@ app.listen(config.port, () => {
   console.log(`Monitoring: ${config.containerName}`);
   console.log(`Idle timeout: ${config.idleTimeoutMinutes} minutes`);
   startIdleMonitor();
+  startPlayerLogTracker();
 });

@@ -30,7 +30,7 @@ export const getValheimPlayerNamesFromLogs = async (): Promise<string[]> => {
     }
   }
 
-  return names;
+  return names.reverse();
 };
 
 export interface ValheimPlayer {

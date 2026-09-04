@@ -3,15 +3,12 @@ import type { Request, Response, NextFunction } from 'express';
 import {
   getContainer,
   getValheimContainerState,
-  getValheimPlayerNamesFromLogs,
   getValheimStatus
 } from '../services/docker';
 import { getIdleStartTime } from '../services/idleMonitor';
 import { createWorldZip, getWorlds } from '../services/worlds';
-import {
-  getPlayerHistory,
-  recordActivePlayers
-} from '../services/playerHistory';
+import { getPlayerHistory } from '../services/playerHistory';
+import { getTrackedActivePlayerNames } from '../services/playerLogTracker';
 import { isDockerError } from '../types/docker';
 import { config } from '../config/config';
 
@@ -89,16 +86,12 @@ serverRouter.get(
       const status = await getValheimStatus();
       const containerState = await getValheimContainerState();
       const isRunning = containerState === 'running';
-      const logPlayerNames =
-        status && status.player_count > 0
-          ? await getValheimPlayerNamesFromLogs()
-          : [];
+      const trackedNames = getTrackedActivePlayerNames();
       const players = (status?.players ?? []).map((player, index) => ({
-        name: player.name || logPlayerNames[index] || 'Unknown',
+        name: player.name || trackedNames[index] || 'Unknown',
         score: player.score,
         duration: Math.floor(player.duration)
       }));
-      await recordActivePlayers(players.map((player) => player.name));
       const idleStart = getIdleStartTime();
       const idleMinutes =
         idleStart && isRunning ? (Date.now() - idleStart.getTime()) / 60000 : 0;
