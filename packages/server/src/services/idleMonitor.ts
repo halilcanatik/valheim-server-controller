@@ -1,11 +1,6 @@
-import {
-  getContainer,
-  getValheimPlayerNamesFromLogs,
-  getValheimStatus
-} from './docker';
+import { getContainer, getValheimStatus } from './docker';
 import { isDockerError } from '../types/docker';
 import { config } from '../config/config';
-import { recordActivePlayers } from './playerHistory';
 
 let idleStartTime: Date | null = null;
 
@@ -16,19 +11,11 @@ const checkIdleAndShutdown = async () => {
     const status = await getValheimStatus();
 
     if (status === null) {
-      await recordActivePlayers([]);
       idleStartTime = null;
       return;
     }
 
     const playerCount = status.player_count ?? 0;
-    const logPlayerNames =
-      playerCount > 0 ? await getValheimPlayerNamesFromLogs() : [];
-    const activeNames = (status.players ?? []).map(
-      (player, index) => player.name || logPlayerNames[index] || 'Unknown'
-    );
-    await recordActivePlayers(activeNames);
-
     if (playerCount === 0) {
       if (!idleStartTime) {
         idleStartTime = new Date();

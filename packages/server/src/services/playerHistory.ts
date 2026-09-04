@@ -22,6 +22,10 @@ const EMPTY_HISTORY: StoredPlayer[] = [];
 let players: StoredPlayer[] | null = null;
 let writeQueue = Promise.resolve();
 
+const savePlayers = () => {
+  if (players) persistPlayers(players.map((player) => ({ ...player })));
+};
+
 const loadPlayers = async (): Promise<StoredPlayer[]> => {
   if (players) return players;
 
@@ -144,4 +148,53 @@ export const getPlayerHistory = async (
       if (a.active !== b.active) return a.active ? -1 : 1;
       return (b.lastSeenAt ?? '').localeCompare(a.lastSeenAt ?? '');
     });
+};
+
+export const recordPlayerJoined = async (
+  name: string,
+  observedAt = new Date()
+) => {
+  if (!name || name === 'Unknown') return;
+
+  const storedPlayers = await loadPlayers();
+  let player = storedPlayers.find((item) => item.name === name);
+
+  if (!player) {
+    player = {
+      name,
+      totalPlaytimeSeconds: 0,
+      currentSessionStartedAt: observedAt.toISOString(),
+      lastSeenAt: observedAt.toISOString(),
+      lastObservedAt: observedAt.toISOString()
+    };
+    storedPlayers.push(player);
+  } else if (!player.currentSessionStartedAt) {
+    player.currentSessionStartedAt = observedAt.toISOString();
+    player.lastSeenAt = observedAt.toISOString();
+    player.lastObservedAt = observedAt.toISOString();
+  }
+
+  savePlayers();
+};
+
+export const recordPlayerLeft = async (
+  name: string,
+  observedAt = new Date()
+) => {
+  const storedPlayers = await loadPlayers();
+  const player = storedPlayers.find((item) => item.name === name);
+
+  if (!player || !player.currentSessionStartedAt) return;
+
+  if (player.lastObservedAt) {
+    player.totalPlaytimeSeconds += Math.max(
+      0,
+      (observedAt.getTime() - new Date(player.lastObservedAt).getTime()) / 1000
+    );
+  }
+
+  player.currentSessionStartedAt = null;
+  player.lastObservedAt = null;
+  player.lastSeenAt = observedAt.toISOString();
+  savePlayers();
 };

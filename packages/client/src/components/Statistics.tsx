@@ -32,10 +32,13 @@ export const Statistics = ({ players }: StatisticsProps) => {
             <div className="d-flex flex-column gap-2">
               {onlinePlayers.map((player) => (
                 <div
-                  className="d-flex justify-content-between align-items-center gap-2 text-info"
+                  className="d-flex justify-content-between align-items-center gap-2"
                   key={player.name}
                 >
-                  <span className="text-truncate">{player.name}</span>
+                  <span className="d-flex align-items-center text-truncate">
+                    <i className="bi bi-person-fill me-2 text-info"></i>
+                    <span>{player.name}</span>
+                  </span>
                   <span className="text-nowrap small">
                     {formatDuration(player.currentPlaytimeSeconds)}
                   </span>
@@ -53,12 +56,17 @@ export const Statistics = ({ players }: StatisticsProps) => {
             <div className="d-flex flex-column gap-2">
               {totalPlayers.map((player) => (
                 <div
-                  className={`d-flex justify-content-between align-items-center gap-2 ${
-                    player.active ? 'text-info' : 'text-muted'
-                  }`}
+                  className="d-flex justify-content-between align-items-center gap-2"
                   key={player.name}
                 >
-                  <span className="text-truncate">{player.name}</span>
+                  <span className="d-flex align-items-center text-truncate">
+                    <i
+                      className={`bi bi-person-fill me-2 ${
+                        player.active ? 'text-info' : 'text-muted'
+                      }`}
+                    ></i>
+                    <span>{player.name}</span>
+                  </span>
                   <span className="text-nowrap small">
                     {formatDuration(player.totalPlaytimeSeconds)}
                   </span>
