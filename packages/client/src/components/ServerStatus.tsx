@@ -4,6 +4,20 @@ interface ServerStatusProps {
   status: ServerStatusType;
 }
 
+const formatDuration = (seconds: number) => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+};
+
+const formatLastSeen = (date: string | null) =>
+  date
+    ? new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'short',
+        timeStyle: 'short'
+      }).format(new Date(date))
+    : '-';
+
 export const ServerStatus = ({ status }: ServerStatusProps) => (
   <div className="mb-4">
     <h6 className="text-uppercase text-muted mb-3">Server Status</h6>
@@ -55,15 +69,52 @@ export const ServerStatus = ({ status }: ServerStatusProps) => (
         <small className="text-muted d-block mb-2">Players Online</small>
         {status.players.length > 0 ? (
           <div className="d-flex flex-column gap-2">
-            {status.players.map((player, index) => (
-              <div className="d-flex align-items-center" key={`${player.name}-${index}`}>
-                <i className="bi bi-person-fill me-2 text-info"></i>
-                <span>{player.name}</span>
-              </div>
-            ))}
+            {status.players.map((currentPlayer, index) => {
+              const player = status.playerHistory.find(
+                (historyPlayer) => historyPlayer.name === currentPlayer.name
+              );
+              const name = player?.name ?? currentPlayer.name;
+
+              return (
+                <div key={`${name}-${index}`}>
+                  <div className="d-flex align-items-center">
+                    <i className="bi bi-person-fill me-2 text-info"></i>
+                    <span>{name}</span>
+                  </div>
+                  {player && (
+                    <small className="text-muted ms-4">
+                      Current: {formatDuration(player.currentPlaytimeSeconds)}
+                      <br />
+                      Total: {formatDuration(player.totalPlaytimeSeconds)}
+                    </small>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <span className="text-muted small">No players online</span>
+        )}
+
+        {status.playerHistory.some((player) => !player.active) && (
+          <>
+            <small className="text-muted d-block mt-3 mb-2">Recent Players</small>
+            <div className="d-flex flex-column gap-2">
+              {status.playerHistory
+                .filter((player) => !player.active)
+                .slice(0, 5)
+                .map((player) => (
+                  <div key={player.name} className="small">
+                    <div>{player.name}</div>
+                    <span className="text-muted">
+                      Last seen: {formatLastSeen(player.lastSeenAt)}
+                      <br />
+                      Total: {formatDuration(player.totalPlaytimeSeconds)}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </>
         )}
       </div>
     </div>
