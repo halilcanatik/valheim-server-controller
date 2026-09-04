@@ -7,6 +7,7 @@ import { ApiKeyInput } from './components/ApiKeyInput';
 import { ServerStatus as ServerStatusDisplay } from './components/ServerStatus';
 import { ServerControls } from './components/ServerControls';
 import { WorldFiles } from './components/WorldFiles';
+import { Statistics } from './components/Statistics';
 import { PageHeader } from './components/PageHeader';
 import 'bootswatch/dist/darkly/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
@@ -93,6 +94,8 @@ export const App = () => {
                       onStop={stopServer}
                       onRefresh={fetchStatus}
                     />
+                    <hr />
+                    <Statistics players={status.playerHistory} />
                     <hr />
                     <WorldFiles
                       status={status}
