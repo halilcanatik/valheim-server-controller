@@ -99,7 +99,11 @@ export const createWorldZip = async (worldName: string): Promise<PassThrough> =>
     name: `${worldName}.fwl`
   });
 
-  await archive.finalize();
+  void archive.finalize().catch((error: unknown) => {
+    output.destroy(
+      error instanceof Error ? error : new Error('Unable to finalize archive')
+    );
+  });
 
   return output;
 };
