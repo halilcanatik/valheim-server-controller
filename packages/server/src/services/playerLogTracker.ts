@@ -6,33 +6,19 @@ import {
 } from './playerHistory';
 
 let activeNames: string[] = [];
-const steamIdToName = new Map<string, string>();
-let latestSteamId: string | null = null;
+const ownerIdToName = new Map<string, string>();
 
 export const getTrackedActivePlayerNames = () => [...activeNames];
 
 const processLogLine = (line: string) => {
-  const connection = line.match(/Got connection SteamID (\d+)/);
-
-  if (connection) {
-    latestSteamId = connection[1];
-    return;
-  }
-
-  const joined = line.match(/Got character ZDOID from (.+?)\s*:/);
+  const joined = line.match(
+    /Got character ZDOID from (.+?)\s*:\s*(-?\d+):\d+/
+  );
   const joinedName = joined?.[1]?.trim();
+  const joinedOwnerId = joined?.[2];
 
-  if (joinedName) {
-    if (latestSteamId) {
-      const previousName = steamIdToName.get(latestSteamId);
-
-      if (previousName && previousName !== joinedName) {
-        activeNames = activeNames.filter((name) => name !== previousName);
-        void recordPlayerLeft(previousName);
-      }
-
-      steamIdToName.set(latestSteamId, joinedName);
-    }
+  if (joinedName && joinedOwnerId) {
+    ownerIdToName.set(joinedOwnerId, joinedName);
 
     activeNames = [
       ...activeNames.filter((name) => name !== joinedName),
@@ -42,18 +28,22 @@ const processLogLine = (line: string) => {
     return;
   }
 
-  const socketClosed = line.match(/Closing socket (\d+)/);
+  const characterDestroyed = line.match(
+    /Destroying abandoned non persistent zdo (-?\d+):1 owner (-?\d+)/
+  );
 
-  if (socketClosed) {
-    const name = steamIdToName.get(socketClosed[1]);
+  if (
+    characterDestroyed &&
+    characterDestroyed[1] === characterDestroyed[2]
+  ) {
+    const ownerId = characterDestroyed[2];
+    const name = ownerIdToName.get(ownerId);
 
     if (name) {
       activeNames = activeNames.filter((activeName) => activeName !== name);
       void recordPlayerLeft(name);
-      steamIdToName.delete(socketClosed[1]);
+      ownerIdToName.delete(ownerId);
     }
-
-    if (latestSteamId === socketClosed[1]) latestSteamId = null;
     return;
   }
 
@@ -67,6 +57,12 @@ const processLogLine = (line: string) => {
     void recordPlayerLeft(leftName);
   }
 };
+
+const splitLogEntries = (text: string): string[] =>
+  text
+    .split(/\r?\n|(?=(?:[A-Z][a-z]{2}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+supervisord:))/)
+    .map((entry) => entry.trim())
+    .filter(Boolean);
 
 const closeTrackedSessions = () => {
   const names = activeNames;
@@ -86,7 +82,7 @@ const followLogs = async () => {
 
     stream.on('data', (chunk: Buffer | string) => {
       buffer += chunk.toString();
-      const lines = buffer.split(/\r?\n/);
+      const lines = splitLogEntries(buffer);
       buffer = lines.pop() ?? '';
       lines.forEach(processLogLine);
     });
