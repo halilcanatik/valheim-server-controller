@@ -1,9 +1,11 @@
 name: Build and Publish Docker Images
 
 on:
+  workflow_dispatch: # Allows you to trigger the build manually with a button
   push:
     branches:
       - master
+      - worlds-download-edit
 
 jobs:
   build-and-push:
