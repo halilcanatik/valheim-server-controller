@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from 'express';
 import {
   getContainer,
   getValheimContainerState,
+  getValheimPlayerNamesFromLogs,
   getValheimStatus
 } from '../services/docker';
 import { getIdleStartTime } from '../services/idleMonitor';
@@ -84,6 +85,15 @@ serverRouter.get(
       const status = await getValheimStatus();
       const containerState = await getValheimContainerState();
       const isRunning = containerState === 'running';
+      const logPlayerNames =
+        status && status.player_count > 0
+          ? await getValheimPlayerNamesFromLogs()
+          : [];
+      const players = (status?.players ?? []).map((player, index) => ({
+        name: player.name || logPlayerNames[index] || 'Unknown',
+        score: player.score,
+        duration: Math.floor(player.duration)
+      }));
       const idleStart = getIdleStartTime();
       const idleMinutes =
         idleStart && isRunning ? (Date.now() - idleStart.getTime()) / 60000 : 0;
@@ -93,11 +103,7 @@ serverRouter.get(
         status: containerState,
         running: isRunning,
         playerCount: status?.player_count ?? 0,
-        players: (status?.players ?? []).map((p) => ({
-          name: p.name || 'Unknown',
-          score: p.score,
-          duration: Math.floor(p.duration)
-        })),
+        players,
         idleMinutes: idleMinutes > 0 ? parseFloat(idleMinutes.toFixed(1)) : 0,
         shutdownIn:
           idleMinutes > 0

@@ -78,3 +78,10 @@ h6.text-uppercase {
 body {
     background: linear-gradient(135deg, #1a1d29 0%, #2c3e50 100%);
 }
+
+@media (min-width: 768px) {
+    .border-start-md {
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        padding-left: 1.5rem;
+    }
+}
