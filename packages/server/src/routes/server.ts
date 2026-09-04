@@ -8,6 +8,10 @@ import {
 } from '../services/docker';
 import { getIdleStartTime } from '../services/idleMonitor';
 import { createWorldZip, getWorlds } from '../services/worlds';
+import {
+  getPlayerHistory,
+  recordActivePlayers
+} from '../services/playerHistory';
 import { isDockerError } from '../types/docker';
 import { config } from '../config/config';
 
@@ -94,6 +98,7 @@ serverRouter.get(
         score: player.score,
         duration: Math.floor(player.duration)
       }));
+      await recordActivePlayers(players.map((player) => player.name));
       const idleStart = getIdleStartTime();
       const idleMinutes =
         idleStart && isRunning ? (Date.now() - idleStart.getTime()) / 60000 : 0;
@@ -104,6 +109,7 @@ serverRouter.get(
         running: isRunning,
         playerCount: status?.player_count ?? 0,
         players,
+        playerHistory: await getPlayerHistory(),
         idleMinutes: idleMinutes > 0 ? parseFloat(idleMinutes.toFixed(1)) : 0,
         shutdownIn:
           idleMinutes > 0

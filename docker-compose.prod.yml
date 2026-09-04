@@ -56,6 +56,7 @@ services:
       - IDLE_TIMEOUT_MINUTES=${IDLE_TIMEOUT_MINUTES:-30}
     volumes:
       - ${VALHEIM_CONFIG_HOST_PATH:-./valheim-config}:/valheim-config:ro
+      - ${PLAYER_HISTORY_HOST_PATH:-./player-history}:/player-history
     depends_on:
       - docker-proxy
       - valheim-server

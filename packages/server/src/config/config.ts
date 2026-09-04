@@ -8,5 +8,8 @@ export const config = {
   valheimConfigPath:
     process.env.VALHEIM_CONFIG_PATH || '/valheim-config',
 
-  worldName: process.env.WORLD_NAME || ''
+  worldName: process.env.WORLD_NAME || '',
+
+  playerHistoryPath:
+    process.env.PLAYER_HISTORY_PATH || '/player-history/player-history.json'
 }as const;
