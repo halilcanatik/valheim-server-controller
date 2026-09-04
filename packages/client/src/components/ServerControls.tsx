@@ -1,5 +1,7 @@
 interface ServerControlsProps {
   running: boolean;
+  stopping: boolean;
+  playerCount: number;
   onStart: () => void;
   onStop: () => void;
   onRefresh: () => void;
@@ -7,6 +9,8 @@ interface ServerControlsProps {
 
 export const ServerControls = ({
   running,
+  stopping,
+  playerCount,
   onStart,
   onStop,
   onRefresh
@@ -22,14 +26,27 @@ export const ServerControls = ({
         <i className="bi bi-play-fill me-2"></i>
         Start Server
       </button>
-      <button
-        className="btn btn-danger d-flex align-items-center justify-content-center"
-        onClick={onStop}
-        disabled={!running}
+      <span
+        title={
+          playerCount > 0
+            ? 'Stop Server is unavailable while players are in the game.'
+            : undefined
+        }
       >
-        <i className="bi bi-stop-fill me-2"></i>
-        Stop Server
-      </button>
+        <button
+          className="btn btn-danger d-flex align-items-center justify-content-center w-100"
+          onClick={onStop}
+          disabled={!running || stopping || playerCount > 0}
+        >
+          <i className="bi bi-stop-fill me-2"></i>
+          {stopping ? 'Stopping Server, Please Wait' : 'Stop Server'}
+        </button>
+      </span>
+      {playerCount > 0 && running && !stopping && (
+        <div className="text-warning small mt-2 text-center">
+          Stop Server is unavailable while players are in the game.
+        </div>
+      )}
       <button
         className="btn btn-outline-secondary d-flex align-items-center justify-content-center"
         onClick={onRefresh}

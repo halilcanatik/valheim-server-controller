@@ -131,6 +131,15 @@ serverRouter.post(
   '/stop',
   async (_: Request, res: Response, next: NextFunction) => {
     try {
+      const status = await getValheimStatus();
+
+      if ((status?.player_count ?? 0) > 0) {
+        res.status(409).json({
+          error: 'Cannot stop the server while players are online'
+        });
+        return;
+      }
+
       const container = getContainer();
       await container.stop({ t: 30 });
       res.json({ message: 'Server stopped successfully', status: 'stopped' });
