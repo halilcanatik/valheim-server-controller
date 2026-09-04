@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import type { Request, Response, NextFunction } from 'express';
-import { getContainer, getValheimStatus } from '../services/docker';
+import {
+  getContainer,
+  getValheimContainerState,
+  getValheimStatus
+} from '../services/docker';
 import { getIdleStartTime } from '../services/idleMonitor';
-import { getWorlds } from '../services/worlds';
+import { createWorldZip, getWorlds } from '../services/worlds';
 import { isDockerError } from '../types/docker';
 import { config } from '../config/config';
 
@@ -20,6 +24,55 @@ serverRouter.get(
       });
     } catch (e) {
       next(e);
+    }
+  }
+);
+
+serverRouter.get(
+  '/worlds/:world/download',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const containerState = await getValheimContainerState();
+
+      if (containerState !== 'exited') {
+        res.status(403).json({
+          error: 'World downloads are available only when the server is stopped'
+        });
+        return;
+      }
+
+      const worldName = req.params.world;
+
+      if (typeof worldName !== 'string' || worldName.length === 0) {
+        res.status(400).json({ error: 'Invalid world name' });
+        return;
+      }
+
+      const worlds = await getWorlds();
+
+      if (!worlds.some((world) => world.name === worldName)) {
+        res.status(404).json({ error: 'World not found' });
+        return;
+      }
+
+      const worldZip = await createWorldZip(worldName);
+
+      res.attachment(`${worldName}.zip`);
+      worldZip.on('error', () => {
+        if (!res.headersSent) {
+          next(new Error('Unable to create world download'));
+        } else {
+          res.destroy();
+        }
+      });
+      worldZip.pipe(res);
+    } catch (e) {
+      if (e instanceof Error && 'statusCode' in e) {
+        next(e);
+        return;
+      }
+
+      res.status(500).json({ error: 'Unable to create world download' });
     }
   }
 );
