@@ -34,11 +34,13 @@ export const App = () => {
 
   useEffect(() => {
     if (!savedApiKey) return;
+    const isTransitioning =
+      status?.status === 'stopping' || status?.status === 'restarting';
     const interval = setInterval(() => {
       void fetchStatus();
-    }, 30000);
+    }, isTransitioning ? 5000 : 30000);
     return () => clearInterval(interval);
-  }, [savedApiKey, fetchStatus]);
+  }, [savedApiKey, status?.status, fetchStatus]);
 
   useEffect(() => {
     if (!message) return;
@@ -112,7 +114,7 @@ export const App = () => {
                   <div className="text-center py-4">
                     <i className="bi bi-info-circle fs-1 text-muted mb-3 d-block"></i>
                     <p className="text-muted">
-                      Enter your API key to view server status
+                      Enter your API key (Server Password) to view server status
                     </p>
                   </div>
                 )}
