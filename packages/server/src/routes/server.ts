@@ -13,6 +13,11 @@ import {
   getRecordedWorlds
 } from '../services/playerHistory';
 import { getTrackedActivePlayerNames } from '../services/playerLogTracker';
+import {
+  clearStopRequested,
+  isStopRequested,
+  markStopRequested
+} from '../services/containerTransition';
 import { isDockerError } from '../types/docker';
 import { config } from '../config/config';
 
@@ -89,7 +94,14 @@ serverRouter.get(
     try {
       const status = await getValheimStatus();
       const containerState = await getValheimContainerState();
-      const isRunning = containerState === 'running';
+      const stopRequested = await isStopRequested();
+      const isStopped = containerState === 'exited';
+
+      if (isStopped && stopRequested) await clearStopRequested();
+
+      const displayState =
+        isStopped ? 'exited' : stopRequested ? 'stopping' : containerState;
+      const isRunning = displayState === 'running';
       const trackedNames = getTrackedActivePlayerNames();
       const playerCount = status?.player_count ?? 0;
       const statusPlayers = status?.players ?? [];
@@ -108,7 +120,7 @@ serverRouter.get(
 
       res.json({
         containerName: config.containerName,
-        status: containerState,
+        status: displayState,
         running: isRunning,
         playerCount: Math.max(playerCount, players.length),
         players,
@@ -134,9 +146,11 @@ serverRouter.post(
     try {
       const container = getContainer();
       await container.start();
+      await clearStopRequested();
       res.json({ message: 'Server started successfully', status: 'starting' });
     } catch (e) {
       if (isDockerError(e) && e.statusCode === 304) {
+        await clearStopRequested();
         res.json({ message: 'Server is already running', status: 'running' });
         return;
       }
@@ -159,13 +173,16 @@ serverRouter.post(
       }
 
       const container = getContainer();
+      await markStopRequested();
       await container.stop({ t: 30 });
-      res.json({ message: 'Server stopped successfully', status: 'stopped' });
+      res.json({ message: 'Server stopping...', status: 'stopping' });
     } catch (e) {
       if (isDockerError(e) && e.statusCode === 304) {
+        await clearStopRequested();
         res.json({ message: 'Server is already stopped', status: 'stopped' });
         return;
       }
+      await clearStopRequested();
       next(e);
     }
   }

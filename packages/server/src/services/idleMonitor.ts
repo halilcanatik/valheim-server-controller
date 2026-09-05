@@ -1,6 +1,7 @@
 import { getContainer, getValheimStatus } from './docker';
 import { isDockerError } from '../types/docker';
 import { config } from '../config/config';
+import { markStopRequested } from './containerTransition';
 
 let idleStartTime: Date | null = null;
 
@@ -30,6 +31,7 @@ const checkIdleAndShutdown = async () => {
       if (idleMinutes >= config.idleTimeoutMinutes) {
         console.log('Shutting down due to inactivity...');
         const container = getContainer();
+        await markStopRequested();
         await container.stop();
         idleStartTime = null;
       } else {
