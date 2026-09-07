@@ -13,6 +13,7 @@ import {
   getRecordedWorlds
 } from '../services/playerHistory';
 import { getTrackedActivePlayerNames } from '../services/playerLogTracker';
+import { getWorldStatsByWorld } from '../services/worldStats';
 import {
   clearStopRequested,
   isStopRequested,
@@ -128,6 +129,7 @@ serverRouter.get(
         recordedWorlds: await getRecordedWorlds(),
         playerHistory: await getPlayerHistory(),
         playerHistoryByWorld: await getPlayerHistoryByWorld(),
+        worldStatsByWorld: await getWorldStatsByWorld(),
         idleMinutes: idleMinutes > 0 ? parseFloat(idleMinutes.toFixed(1)) : 0,
         shutdownIn:
           idleMinutes > 0

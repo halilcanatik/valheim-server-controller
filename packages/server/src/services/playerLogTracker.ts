@@ -5,6 +5,10 @@ import {
   recordPlayerJoined,
   recordPlayerLeft
 } from './playerHistory';
+import {
+  recordGameServerConnected,
+  recordGameServerStopped
+} from './worldStats';
 
 let activeNames: string[] = [];
 const ownerIdToName = new Map<string, string>();
@@ -12,6 +16,13 @@ const ownerIdToName = new Map<string, string>();
 export const getTrackedActivePlayerNames = () => [...activeNames];
 
 const processLogLine = (line: string) => {
+  const logDate = parseLogDate(line);
+
+  if (line.includes('Game server connected')) {
+    void recordGameServerConnected(undefined, logDate);
+    return;
+  }
+
   const joined = line.match(
     /Got character ZDOID from (.+?)\s*:\s*(-?\d+):\d+/
   );
@@ -59,6 +70,22 @@ const processLogLine = (line: string) => {
   }
 };
 
+const parseLogDate = (line: string): Date => {
+  const match = line.match(
+    /([A-Z][a-z]{2})\s+(\d{1,2})\s+(\d{2}:\d{2}:\d{2})\s+supervisord:/
+  );
+  if (!match) return new Date();
+
+  const now = new Date();
+  const parsed = new Date(
+    `${match[1]} ${match[2]} ${now.getFullYear()} ${match[3]}`
+  );
+  if (parsed.getTime() > now.getTime() + 86400000) {
+    parsed.setFullYear(parsed.getFullYear() - 1);
+  }
+  return parsed;
+};
+
 const splitLogEntries = (text: string): string[] =>
   text
     .split(/\r?\n|(?=(?:[A-Z][a-z]{2}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}\s+supervisord:))/)
@@ -69,6 +96,7 @@ const closeTrackedSessions = () => {
   const names = activeNames;
   activeNames = [];
   names.forEach((name) => void recordPlayerLeft(name));
+  void recordGameServerStopped();
 };
 
 const followLogs = async () => {
@@ -113,5 +141,6 @@ const followLogs = async () => {
 
 export const startPlayerLogTracker = () => {
   void closeActiveSessionsForOtherWorlds();
+  void recordGameServerStopped();
   void followLogs();
 };

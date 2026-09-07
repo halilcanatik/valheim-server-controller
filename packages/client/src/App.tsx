@@ -102,6 +102,7 @@ export const App = () => {
                       currentWorld={status.currentWorld}
                       recordedWorlds={status.recordedWorlds}
                       playerHistoryByWorld={status.playerHistoryByWorld}
+                      worldStatsByWorld={status.worldStatsByWorld}
                     />
                     <hr />
                     <WorldFiles

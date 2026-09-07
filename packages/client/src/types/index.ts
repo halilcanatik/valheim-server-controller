@@ -13,6 +13,7 @@ export type ServerStatus = {
   recordedWorlds: string[];
   playerHistory: PlayerHistoryInfo[];
   playerHistoryByWorld: Record<string, PlayerHistoryInfo[]>;
+  worldStatsByWorld: Record<string, WorldStatsInfo>;
   idleMinutes: number;
   shutdownIn: number | null;
 };
@@ -23,6 +24,15 @@ export type PlayerHistoryInfo = {
   currentPlaytimeSeconds: number;
   totalPlaytimeSeconds: number;
   lastSeenAt: string | null;
+};
+
+export type WorldStatsInfo = {
+  worldName: string;
+  currentUptimeSeconds: number;
+  totalUptimeSeconds: number;
+  lastKnownWorldTime: number | null;
+  lastKnownGameDay: number | null;
+  lastWorldTimeAt: string | null;
 };
 
 export type WorldInfo = {

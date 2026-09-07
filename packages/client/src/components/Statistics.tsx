@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import type { PlayerHistoryInfo } from '../types';
+import type { PlayerHistoryInfo, WorldStatsInfo } from '../types';
 
 interface StatisticsProps {
   currentWorld: string;
   recordedWorlds: string[];
   playerHistoryByWorld: Record<string, PlayerHistoryInfo[]>;
+  worldStatsByWorld: Record<string, WorldStatsInfo>;
 }
 
 const formatDuration = (seconds: number) => {
@@ -20,16 +21,27 @@ const formatDuration = (seconds: number) => {
 export const Statistics = ({
   currentWorld,
   recordedWorlds,
-  playerHistoryByWorld
+  playerHistoryByWorld,
+  worldStatsByWorld
 }: StatisticsProps) => {
   const [selectedWorld, setSelectedWorld] = useState(currentWorld);
   const players = playerHistoryByWorld[selectedWorld] ?? [];
+  const worldStats = worldStatsByWorld[selectedWorld];
   const onlinePlayers = players
     .filter((player) => player.active)
     .sort((a, b) => b.currentPlaytimeSeconds - a.currentPlaytimeSeconds);
   const totalPlayers = [...players].sort(
     (a, b) => b.totalPlaytimeSeconds - a.totalPlaytimeSeconds
   );
+
+  const formatUptime = (seconds: number) => {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  };
 
   return (
     <section>
@@ -51,6 +63,16 @@ export const Statistics = ({
             ))}
           </select>
         )}
+      </div>
+      <div className="row g-2 mb-3">
+        <div className="col-6">
+          <small className="text-muted d-block">Server Uptime</small>
+          <span className="small">
+            Current: {formatUptime(worldStats?.currentUptimeSeconds ?? 0)}
+            <br />
+            Total: {formatUptime(worldStats?.totalUptimeSeconds ?? 0)}
+          </span>
+        </div>
       </div>
       <div className="row g-3">
         <div className="col-6">
