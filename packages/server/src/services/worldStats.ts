@@ -114,19 +114,27 @@ export const recordWorldTime = async (
   persistStats((await loadStats()).map((item) => ({ ...item })));
 };
 
-const toInfo = (world: StoredWorldStats, observedAt: Date): WorldStatsInfo => ({
-  worldName: world.worldName,
-  currentUptimeSeconds: world.currentSessionStartedAt
+const toInfo = (world: StoredWorldStats, observedAt: Date): WorldStatsInfo => {
+  const currentUptimeSeconds = world.currentSessionStartedAt
     ? Math.max(
         0,
-        (observedAt.getTime() - new Date(world.currentSessionStartedAt).getTime()) / 1000
+        (observedAt.getTime() -
+          new Date(world.currentSessionStartedAt).getTime()) /
+          1000
       )
-    : 0,
-  totalUptimeSeconds: Math.floor(world.totalUptimeSeconds),
-  lastKnownWorldTime: world.lastKnownWorldTime,
-  lastKnownGameDay: world.lastKnownGameDay,
-  lastWorldTimeAt: world.lastWorldTimeAt
-});
+    : 0;
+
+  return {
+    worldName: world.worldName,
+    currentUptimeSeconds,
+    totalUptimeSeconds: Math.floor(
+      world.totalUptimeSeconds + currentUptimeSeconds
+    ),
+    lastKnownWorldTime: world.lastKnownWorldTime,
+    lastKnownGameDay: world.lastKnownGameDay,
+    lastWorldTimeAt: world.lastWorldTimeAt
+  };
+};
 
 export const getWorldStatsByWorld = async (
   observedAt = new Date()
