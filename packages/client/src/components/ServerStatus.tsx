@@ -20,6 +20,8 @@ export const ServerStatus = ({ status }: ServerStatusProps) => (
             ? 'Running'
             : status.status === 'exited'
               ? 'Stopped'
+              : status.status === 'stopping'
+                ? 'Stopping'
               : status.status}
         </strong>
       </div>
