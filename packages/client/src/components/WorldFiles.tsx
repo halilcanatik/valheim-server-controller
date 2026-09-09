@@ -37,8 +37,15 @@ export const WorldFiles = ({
     let active = true;
     void fetchWorlds().then((data) => {
       if (!active) return;
-      setWorlds(data?.worlds ?? []);
-      setSelectedWorld(data?.currentWorld || data?.worlds[0]?.name || '');
+      const availableWorlds = data?.worlds ?? [];
+      const currentWorld = availableWorlds.some(
+        (world) => world.name === data?.currentWorld
+      )
+        ? data?.currentWorld ?? ''
+        : availableWorlds[0]?.name || '';
+
+      setWorlds(availableWorlds);
+      setSelectedWorld(currentWorld);
       setLoading(false);
     });
 
@@ -77,7 +84,7 @@ export const WorldFiles = ({
         disabled={!isStopped || loading || worlds.length === 0}
       >
         {loading && <option>Loading worlds...</option>}
-        {!loading && worlds.length === 0 && <option>No complete worlds found</option>}
+        {!loading && worlds.length === 0 && <option>No worlds found</option>}
         {worlds.map((world) => (
           <option key={world.name} value={world.name}>
             {world.name}
@@ -88,7 +95,7 @@ export const WorldFiles = ({
       {selected && (
         <div className="small text-muted mb-3">
           <div>Last saved: {formatDate(selected.lastModified)}</div>
-          <div>Size: {formatSize(selected.dbSize + selected.fwlSize)}</div>
+          <div>Size: {formatSize(selected.size)}</div>
         </div>
       )}
 

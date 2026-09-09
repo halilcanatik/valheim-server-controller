@@ -10,46 +10,50 @@ export interface WorldInfo {
   name: string;
   isCurrent: boolean;
   lastModified: string;
-  dbSize: number;
-  fwlSize: number;
+  size: number;
 }
 
+const getDirectorySize = async (directory: string): Promise<number> => {
+  const entries = await fs.readdir(directory, { withFileTypes: true });
+  const sizes = await Promise.all(
+    entries.map(async (entry) => {
+      const entryPath = path.join(directory, entry.name);
+
+      if (entry.isDirectory()) return getDirectorySize(entryPath);
+      if (entry.isFile()) return (await fs.stat(entryPath)).size;
+
+      return 0;
+    })
+  );
+
+  return sizes.reduce((total, size) => total + size, 0);
+};
+
 export const getWorlds = async (): Promise<WorldInfo[]> => {
-  const files = await fs.readdir(WORLDS_DIR);
-
-  const worldNames = new Set<string>();
-
-  for (const file of files) {
-    if (file.endsWith('.db')) {
-      worldNames.add(file.slice(0, -3));
-    }
-  }
+  const entries = await fs.readdir(WORLDS_DIR, { withFileTypes: true });
 
   const worlds: WorldInfo[] = [];
 
-  for (const name of worldNames) {
-    const dbPath = path.join(WORLDS_DIR, `${name}.db`);
-    const fwlPath = path.join(WORLDS_DIR, `${name}.fwl`);
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+
+    const name = entry.name;
+    const worldPath = path.join(WORLDS_DIR, name);
 
     try {
-      const [dbStats, fwlStats] = await Promise.all([
-        fs.stat(dbPath),
-        fs.stat(fwlPath)
+      const [worldStats, size] = await Promise.all([
+        fs.stat(worldPath),
+        getDirectorySize(worldPath)
       ]);
-
-      if (!dbStats.isFile() || !fwlStats.isFile()) {
-        continue;
-      }
 
       worlds.push({
         name,
         isCurrent: name === config.worldName,
-        lastModified: dbStats.mtime.toISOString(),
-        dbSize: dbStats.size,
-        fwlSize: fwlStats.size
+        lastModified: worldStats.mtime.toISOString(),
+        size
       });
     } catch {
-      // Ignore incomplete world pairs.
+      // Ignore world directories that disappear during discovery.
     }
   }
 
@@ -67,16 +71,11 @@ export const getWorlds = async (): Promise<WorldInfo[]> => {
 };
 
 export const createWorldZip = async (worldName: string): Promise<PassThrough> => {
-  const dbPath = path.join(WORLDS_DIR, `${worldName}.db`);
-  const fwlPath = path.join(WORLDS_DIR, `${worldName}.fwl`);
+  const worldPath = path.join(WORLDS_DIR, worldName);
+  const worldStats = await fs.stat(worldPath);
 
-  const [dbStats, fwlStats] = await Promise.all([
-    fs.stat(dbPath),
-    fs.stat(fwlPath)
-  ]);
-
-  if (!dbStats.isFile() || !fwlStats.isFile()) {
-    throw new Error('World files are incomplete');
+  if (!worldStats.isDirectory()) {
+    throw new Error('World directory is invalid');
   }
 
   const archive = new ZipArchive({
@@ -91,13 +90,7 @@ export const createWorldZip = async (worldName: string): Promise<PassThrough> =>
 
   archive.pipe(output);
 
-  archive.file(dbPath, {
-    name: `${worldName}.db`
-  });
-
-  archive.file(fwlPath, {
-    name: `${worldName}.fwl`
-  });
+  archive.directory(worldPath, worldName);
 
   void archive.finalize().catch((error: unknown) => {
     output.destroy(

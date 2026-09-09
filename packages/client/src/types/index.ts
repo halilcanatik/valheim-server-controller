@@ -39,8 +39,7 @@ export type WorldInfo = {
   name: string;
   isCurrent: boolean;
   lastModified: string;
-  dbSize: number;
-  fwlSize: number;
+  size: number;
 };
 
 export type WorldsResponse = {
