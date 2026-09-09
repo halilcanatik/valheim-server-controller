@@ -19,7 +19,7 @@ services:
     image: lloesche/valheim-server:latest
     container_name: valheim-server
     volumes:
-      - ./valheim-config:/config
+      - ${VALHEIM_CONFIG_HOST_PATH:-./valheim-config}:/config
       - ./valheim-data:/opt/valheim
     ports:
       - "2456-2457:2456-2457/udp"

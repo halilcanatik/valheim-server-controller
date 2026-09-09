@@ -68,8 +68,12 @@ serverRouter.get(
       }
 
       const worldZip = await createWorldZip(worldName);
+      const downloadTimestamp = new Date()
+        .toISOString()
+        .replace(/[:.]/g, '-')
+        .replace('Z', '');
 
-      res.attachment(`${worldName}.zip`);
+      res.attachment(`${worldName}-${downloadTimestamp}.zip`);
       worldZip.on('error', () => {
         if (!res.headersSent) {
           next(new Error('Unable to create world download'));

@@ -6,6 +6,11 @@ interface ApiResponse {
   message: string;
 }
 
+export interface WorldDownload {
+  blob: Blob;
+  filename: string;
+}
+
 export const useServerApi = (
   apiKey: string,
   setStatus: (status: ServerStatus | null) => void,
@@ -98,9 +103,17 @@ export const useServerApi = (
   }, [api, handleError]);
 
   const downloadWorld = useCallback(
-    async (worldName: string): Promise<Blob | null> => {
+    async (worldName: string): Promise<WorldDownload | null> => {
       try {
-        return await api.get(`worlds/${encodeURIComponent(worldName)}/download`).blob();
+        const response = await api.get(
+          `worlds/${encodeURIComponent(worldName)}/download`
+        );
+        const contentDisposition = response.headers.get('content-disposition');
+        const filename =
+          contentDisposition?.match(/filename="?([^";]+)"?/)?.[1] ??
+          `${worldName}.zip`;
+
+        return { blob: await response.blob(), filename };
       } catch (e) {
         if (e instanceof HTTPError && e.response.status === 403) {
           setMessage({
