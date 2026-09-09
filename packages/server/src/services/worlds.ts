@@ -65,8 +65,9 @@ export const getWorlds = async (): Promise<WorldInfo[]> => {
         lastModified: new Date(worldInfo.lastModified).toISOString(),
         size: worldInfo.size
       });
-    } catch {
-      console.warn(`Unable to read world directory: ${worldPath}`);
+    } catch (error) {
+      const reason = error instanceof Error ? ` (${error.message})` : '';
+      console.warn(`Unable to read world directory: ${worldPath}${reason}`);
     }
   }
 
