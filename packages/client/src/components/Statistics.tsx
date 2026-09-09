@@ -25,6 +25,11 @@ export const Statistics = ({
   worldStatsByWorld
 }: StatisticsProps) => {
   const [selectedWorld, setSelectedWorld] = useState(currentWorld);
+  const orderedWorlds = [...recordedWorlds].sort((a, b) => {
+    if (a === currentWorld) return -1;
+    if (b === currentWorld) return 1;
+    return a.localeCompare(b);
+  });
   const players = playerHistoryByWorld[selectedWorld] ?? [];
   const worldStats = worldStatsByWorld[selectedWorld];
   const onlinePlayers = players
@@ -56,7 +61,7 @@ export const Statistics = ({
             onChange={(event) => setSelectedWorld(event.target.value)}
             aria-label="Statistics world"
           >
-            {recordedWorlds.map((world) => (
+            {orderedWorlds.map((world) => (
               <option key={world} value={world}>
                 {world === currentWorld ? `${world} (Current)` : world}
               </option>
