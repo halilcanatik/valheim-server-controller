@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import type { ServerStatus, WorldInfo, WorldsResponse } from '../types';
+import type { WorldDownload } from '../hooks/useServerApi';
 
 interface WorldFilesProps {
   status: ServerStatus;
   fetchWorlds: () => Promise<WorldsResponse | null>;
-  downloadWorld: (worldName: string) => Promise<Blob | null>;
+  downloadWorld: (worldName: string) => Promise<WorldDownload | null>;
 }
 
 const formatSize = (bytes: number) => {
@@ -58,14 +59,14 @@ export const WorldFiles = ({
     if (!selected || !isStopped) return;
 
     setDownloading(true);
-    const blob = await downloadWorld(selected.name);
+    const download = await downloadWorld(selected.name);
     setDownloading(false);
-    if (!blob) return;
+    if (!download) return;
 
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(download.blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${selected.name}.zip`;
+    link.download = download.filename;
     link.click();
     URL.revokeObjectURL(url);
   };

@@ -50,12 +50,13 @@ export const getWorlds = async (): Promise<WorldInfo[]> => {
   const worlds: WorldInfo[] = [];
 
   for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-
     const name = entry.name;
     const worldPath = path.join(WORLDS_DIR, name);
 
     try {
+      const stats = await fs.stat(worldPath);
+      if (!stats.isDirectory()) continue;
+
       const worldInfo = await getDirectoryInfo(worldPath);
 
       worlds.push({
@@ -65,7 +66,7 @@ export const getWorlds = async (): Promise<WorldInfo[]> => {
         size: worldInfo.size
       });
     } catch {
-      // Ignore world directories that disappear during discovery.
+      console.warn(`Unable to read world directory: ${worldPath}`);
     }
   }
 
