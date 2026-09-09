@@ -52,7 +52,7 @@ export const WorldFiles = ({
     return () => {
       active = false;
     };
-  }, [isStopped, fetchWorlds]);
+  }, [isStopped, status, fetchWorlds]);
 
   const handleDownload = async () => {
     if (!selected || !isStopped) return;

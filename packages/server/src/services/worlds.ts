@@ -13,20 +13,35 @@ export interface WorldInfo {
   size: number;
 }
 
-const getDirectorySize = async (directory: string): Promise<number> => {
+interface DirectoryInfo {
+  size: number;
+  lastModified: number;
+}
+
+const getDirectoryInfo = async (directory: string): Promise<DirectoryInfo> => {
   const entries = await fs.readdir(directory, { withFileTypes: true });
-  const sizes = await Promise.all(
+  const directoryStats = await fs.stat(directory);
+  const children = await Promise.all(
     entries.map(async (entry) => {
       const entryPath = path.join(directory, entry.name);
 
-      if (entry.isDirectory()) return getDirectorySize(entryPath);
-      if (entry.isFile()) return (await fs.stat(entryPath)).size;
+      if (entry.isDirectory()) return getDirectoryInfo(entryPath);
+      if (entry.isFile()) {
+        const stats = await fs.stat(entryPath);
+        return { size: stats.size, lastModified: stats.mtimeMs };
+      }
 
-      return 0;
+      return { size: 0, lastModified: 0 };
     })
   );
 
-  return sizes.reduce((total, size) => total + size, 0);
+  return children.reduce(
+    (info, child) => ({
+      size: info.size + child.size,
+      lastModified: Math.max(info.lastModified, child.lastModified)
+    }),
+    { size: 0, lastModified: directoryStats.mtimeMs }
+  );
 };
 
 export const getWorlds = async (): Promise<WorldInfo[]> => {
@@ -41,16 +56,13 @@ export const getWorlds = async (): Promise<WorldInfo[]> => {
     const worldPath = path.join(WORLDS_DIR, name);
 
     try {
-      const [worldStats, size] = await Promise.all([
-        fs.stat(worldPath),
-        getDirectorySize(worldPath)
-      ]);
+      const worldInfo = await getDirectoryInfo(worldPath);
 
       worlds.push({
         name,
         isCurrent: name === config.worldName,
-        lastModified: worldStats.mtime.toISOString(),
-        size
+        lastModified: new Date(worldInfo.lastModified).toISOString(),
+        size: worldInfo.size
       });
     } catch {
       // Ignore world directories that disappear during discovery.
@@ -58,9 +70,6 @@ export const getWorlds = async (): Promise<WorldInfo[]> => {
   }
 
   worlds.sort((a, b) => {
-    if (a.isCurrent && !b.isCurrent) return -1;
-    if (!a.isCurrent && b.isCurrent) return 1;
-
     return (
       new Date(b.lastModified).getTime() -
       new Date(a.lastModified).getTime()
