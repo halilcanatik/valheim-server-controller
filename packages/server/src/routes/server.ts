@@ -12,7 +12,10 @@ import {
   getPlayerHistoryByWorld,
   getRecordedWorlds
 } from '../services/playerHistory';
-import { getTrackedActivePlayerNames } from '../services/playerLogTracker';
+import {
+  getTrackedActivePlayerNames,
+  reconcileActivePlayers
+} from '../services/playerLogTracker';
 import { getWorldStatsByWorld } from '../services/worldStats';
 import {
   clearStopRequested,
@@ -103,6 +106,12 @@ serverRouter.get(
       const isStopped = containerState === 'exited';
 
       if (isStopped && stopRequested) await clearStopRequested();
+
+      if (status) {
+        await reconcileActivePlayers(
+          status.players.map((player) => player.name).filter(Boolean)
+        );
+      }
 
       const displayState =
         isStopped ? 'exited' : stopRequested ? 'stopping' : containerState;

@@ -104,12 +104,13 @@ export const recordGameServerStopped = async (stoppedAt = new Date()) => {
 export const recordWorldTime = async (
   worldTime: number,
   worldName = config.worldName || 'Unknown World',
-  observedAt = new Date()
+  observedAt = new Date(),
+  gameDay: number | null = null
 ) => {
   if (!Number.isFinite(worldTime)) return;
   const world = await getOrCreateStats(worldName);
   world.lastKnownWorldTime = worldTime;
-  world.lastKnownGameDay = null;
+  world.lastKnownGameDay = Number.isFinite(gameDay) ? gameDay : null;
   world.lastWorldTimeAt = observedAt.toISOString();
   persistStats((await loadStats()).map((item) => ({ ...item })));
 };
