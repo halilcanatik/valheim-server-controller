@@ -119,15 +119,23 @@ serverRouter.get(
       const trackedNames = getTrackedActivePlayerNames();
       const playerCount = status?.player_count ?? 0;
       const statusPlayers = status?.players ?? [];
+      const playersByName = new Map(
+        statusPlayers
+          .filter((player) => player.name)
+          .map((player) => [player.name, player] as const)
+      );
       const playerNames = [
-        ...trackedNames,
-        ...statusPlayers.map((player) => player.name).filter(Boolean)
+        ...statusPlayers.map((player) => player.name).filter(Boolean),
+        ...trackedNames
       ].filter((name, index, names) => names.indexOf(name) === index);
-      const players = playerNames.map((name, index) => ({
-        name,
-        score: statusPlayers[index]?.score ?? 0,
-        duration: Math.floor(statusPlayers[index]?.duration ?? 0)
-      }));
+      const players = playerNames.map((name) => {
+        const statusPlayer = playersByName.get(name);
+        return {
+          name,
+          score: statusPlayer?.score ?? 0,
+          duration: Math.floor(statusPlayer?.duration ?? 0)
+        };
+      });
       const idleStart = getIdleStartTime();
       const idleMinutes =
         idleStart && isRunning ? (Date.now() - idleStart.getTime()) / 60000 : 0;
