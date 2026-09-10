@@ -12,12 +12,48 @@ import { PageHeader } from './components/PageHeader';
 import 'bootswatch/dist/darkly/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
+const API_KEY_STORAGE_KEY = 'valheim-controller-api-key';
+const API_KEY_CACHE_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
+interface CachedApiKey {
+  apiKey: string;
+  expiresAt: number;
+}
+
+const readCachedApiKey = (): string => {
+  try {
+    const cached = localStorage.getItem(API_KEY_STORAGE_KEY);
+    if (!cached) return '';
+
+    const parsed = JSON.parse(cached) as CachedApiKey;
+    if (parsed.expiresAt <= Date.now() || !parsed.apiKey) {
+      localStorage.removeItem(API_KEY_STORAGE_KEY);
+      return '';
+    }
+
+    return parsed.apiKey;
+  } catch {
+    localStorage.removeItem(API_KEY_STORAGE_KEY);
+    return '';
+  }
+};
+
+const cacheApiKey = (apiKey: string) => {
+  localStorage.setItem(
+    API_KEY_STORAGE_KEY,
+    JSON.stringify({
+      apiKey,
+      expiresAt: Date.now() + API_KEY_CACHE_DURATION_MS
+    } satisfies CachedApiKey)
+  );
+};
+
 export const App = () => {
   const [status, setStatus] = useState<ServerStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
-  const [apiKeyInput, setApiKeyInput] = useState('');
-  const [savedApiKey, setSavedApiKey] = useState('');
+  const [apiKeyInput, setApiKeyInput] = useState(readCachedApiKey);
+  const [savedApiKey, setSavedApiKey] = useState(readCachedApiKey);
 
   const {
     fetchStatus,
@@ -31,6 +67,17 @@ export const App = () => {
     setMessage,
     setLoading
   );
+
+  useEffect(() => {
+    if (!savedApiKey || status) return;
+    void fetchStatus().then((ok) => {
+      if (!ok) {
+        localStorage.removeItem(API_KEY_STORAGE_KEY);
+        setApiKeyInput('');
+        setSavedApiKey('');
+      }
+    });
+  }, [savedApiKey, status, fetchStatus]);
 
   useEffect(() => {
     if (!savedApiKey) return;
@@ -53,6 +100,7 @@ export const App = () => {
     setLoading(true);
     const ok = await fetchStatus();
     if (ok) {
+      cacheApiKey(apiKeyInput);
       setSavedApiKey(apiKeyInput);
       setMessage({ text: 'Access granted', type: 'success' });
     }
