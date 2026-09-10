@@ -78,6 +78,15 @@ export const Statistics = ({
             Total: {formatUptime(worldStats?.totalUptimeSeconds ?? 0)}
           </span>
         </div>
+        <div className="col-6">
+          <small className="text-muted d-block">Last Recorded Day</small>
+          <span className="small">
+            {worldStats?.lastKnownGameDay !== null &&
+            worldStats?.lastKnownGameDay !== undefined
+              ? `Day ${worldStats.lastKnownGameDay} (Dawn)`
+              : '-'}
+          </span>
+        </div>
       </div>
       <div className="row g-3">
         <div className="col-6">

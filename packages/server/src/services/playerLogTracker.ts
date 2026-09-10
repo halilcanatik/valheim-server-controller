@@ -2,12 +2,14 @@ import type { Readable } from 'stream';
 import { getContainer } from './docker';
 import {
   closeActiveSessionsForOtherWorlds,
+  recordActivePlayers,
   recordPlayerJoined,
   recordPlayerLeft
 } from './playerHistory';
 import {
   recordGameServerConnected,
-  recordGameServerStopped
+  recordGameServerStopped,
+  recordWorldTime
 } from './worldStats';
 
 let activeNames: string[] = [];
@@ -15,12 +17,30 @@ const ownerIdToName = new Map<string, string>();
 
 export const getTrackedActivePlayerNames = () => [...activeNames];
 
+export const reconcileActivePlayers = async (
+  names: string[],
+  observedAt = new Date()
+) => {
+  activeNames = [...new Set(names.filter(Boolean))];
+  await recordActivePlayers(activeNames, observedAt);
+};
+
 const processLogLine = (line: string) => {
   const logDate = parseLogDate(line);
 
   if (line.includes('Game server connected')) {
     void recordGameServerConnected(undefined, logDate);
     return;
+  }
+
+  const worldTime = line.match(/Time\s+([\d.]+),\s*day:(\d+)/i);
+  if (worldTime) {
+    void recordWorldTime(
+      Number(worldTime[1]),
+      undefined,
+      logDate,
+      Number(worldTime[2])
+    );
   }
 
   const joined = line.match(
