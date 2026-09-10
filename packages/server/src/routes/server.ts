@@ -107,25 +107,31 @@ serverRouter.get(
 
       if (isStopped && stopRequested) await clearStopRequested();
 
-      if (status) {
-        await reconcileActivePlayers(
-          status.players.map((player) => player.name).filter(Boolean)
-        );
-      }
-
       const displayState =
         isStopped ? 'exited' : stopRequested ? 'stopping' : containerState;
       const isRunning = displayState === 'running';
       const trackedNames = getTrackedActivePlayerNames();
       const playerCount = status?.player_count ?? 0;
-      const statusPlayers = status?.players ?? [];
+      const statusPlayers = Array.isArray(status?.players)
+        ? status.players
+        : [];
+      const statusPlayerNames = statusPlayers
+        .map((player) => player.name)
+        .filter(Boolean);
+
+      // Valheim can report the player count before it has populated names.
+      // Do not erase log-tracked players from an anonymous status response.
+      if (status && (statusPlayerNames.length > 0 || playerCount === 0)) {
+        await reconcileActivePlayers(statusPlayerNames);
+      }
+
       const playersByName = new Map(
         statusPlayers
           .filter((player) => player.name)
           .map((player) => [player.name, player] as const)
       );
       const playerNames = [
-        ...statusPlayers.map((player) => player.name).filter(Boolean),
+        ...statusPlayerNames,
         ...trackedNames
       ].filter((name, index, names) => names.indexOf(name) === index);
       const players = playerNames.map((name) => {
