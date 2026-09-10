@@ -4,6 +4,9 @@ export const config = {
   containerName: process.env.VALHEIM_CONTAINER_NAME || 'valheim-server',
   idleTimeoutMinutes: parseInt(process.env.IDLE_TIMEOUT_MINUTES || '30'),
   dockerHost: process.env.DOCKER_HOST || 'tcp://docker-proxy:2375',
+  valheimHost:
+    process.env.VALHEIM_HOST || process.env.VALHEIM_CONTAINER_NAME || 'valheim-server',
+  valheimPort: process.env.VALHEIM_PORT || '80',
 
   valheimConfigPath:
     process.env.VALHEIM_CONFIG_PATH || '/valheim-config',

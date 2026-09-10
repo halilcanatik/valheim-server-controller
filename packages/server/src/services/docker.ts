@@ -57,12 +57,17 @@ export interface ValheimStatus {
 
 export const getValheimStatus = async (): Promise<ValheimStatus | null> => {
   try {
-    const res = await fetch(`http://${config.containerName}/status.json`, {
-      signal: AbortSignal.timeout(5000)
-    });
+    const res = await fetch(
+      `http://${config.valheimHost}:${config.valheimPort}/status.json`,
+      { signal: AbortSignal.timeout(5000) }
+    );
     if (!res.ok) return null;
     return (await res.json()) as ValheimStatus;
-  } catch {
+  } catch (error) {
+    console.error(
+      `Unable to fetch Valheim status from ${config.valheimHost}:${config.valheimPort}:`,
+      error
+    );
     return null;
   }
 };
