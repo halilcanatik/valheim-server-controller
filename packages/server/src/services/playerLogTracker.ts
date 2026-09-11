@@ -43,6 +43,19 @@ const processLogLine = (line: string) => {
     );
   }
 
+  const modDisconnect = line.match(
+    /\[Disconnect\]\s+peer=(.+?)\s+uid=(-?\d+)\s+endpoint=/i
+  );
+  const disconnectedName = modDisconnect?.[1]?.trim();
+  const disconnectedOwnerId = modDisconnect?.[2];
+
+  if (disconnectedName && disconnectedOwnerId) {
+    activeNames = activeNames.filter((name) => name !== disconnectedName);
+    ownerIdToName.delete(disconnectedOwnerId);
+    void recordPlayerLeft(disconnectedName, undefined, logDate);
+    return;
+  }
+
   const joined = line.match(
     /Got character ZDOID from (.+?)\s*:\s*(-?\d+):\d+/
   );
